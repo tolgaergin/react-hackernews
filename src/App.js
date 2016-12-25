@@ -1,24 +1,11 @@
 import React, { Component } from 'react';
 import './App.css';
 
-const list = [
-  {
-    title: 'React',
-    url: 'http://facebook.github.io',
-    author: 'Jordan Walke',
-    num_comments: 3,
-    points: 4,
-    objectID: 0,
-  },
-  {
-    title: 'Redux',
-    url: 'http://github.com/reactjs/redux',
-    author: 'Dan Abramov',
-    num_comments: 2,
-    points: 5,
-    objectID: 1,
-  },
-];
+const DEFAULT_QUERY = 'redux';
+const PATH_BASE = 'https://hn.algolia.com/api/v1';
+const PATH_SEARCH = '/search';
+const PARAM_SEARCH = '?query=';
+const SEARCH = `${PATH_BASE}${PATH_SEARCH}${PARAM_SEARCH}`;
 
 const isSearched = (query) => (item) =>
   !query || item.title.toLowerCase().indexOf(query.toLowerCase()) !== -1;
@@ -29,11 +16,37 @@ class App extends Component {
     super(props);
 
     this.state = {
-      list,
-      query: '',
+      result: null,
+      query: DEFAULT_QUERY,
+      isLoading: false,
     };
 
+    this.setSearchTopStories = this.setSearchTopStories.bind(this);
+    this.fetchSearchTopStories = this.fetchSearchTopStories.bind(this);
     this.onSearchChange = this.onSearchChange.bind(this);
+    this.onSearchSubmit = this.onSearchSubmit.bind(this);
+  }
+
+  setSearchTopStories(result) {
+    this.setState({
+      result,
+      isLoading: false,
+    });
+  }
+
+  fetchSearchTopStories(query) {
+    this.setState({
+      isLoading: true,
+    });
+
+    fetch(`${SEARCH}${query}`)
+      .then(response => response.json())
+      .then(result => this.setSearchTopStories(result));
+  }
+
+  componentDidMount() {
+    const { query } = this.state;
+    this.fetchSearchTopStories(query);
   }
 
   onSearchChange(event) {
@@ -42,24 +55,37 @@ class App extends Component {
     });
   }
 
+  onSearchSubmit(event) {
+    const { query } = this.state;
+    this.fetchSearchTopStories(query);
+    event.preventDefault();
+  }
+
   render() {
-    const { query, list } = this.state;
+    const { query, result, isLoading } = this.state;
     return (
       <div className="App">
-        <Search query={query} onChange={this.onSearchChange}>Search: </Search>
-        <Table list={list} pattern={query} />
+        <Search
+          query={query}
+          onChange={this.onSearchChange}
+          onSubmit={this.onSearchSubmit}>Search</Search>
+        { isLoading && <Loading>Loading</Loading> }
+        { result ? <Table list={result.hits} pattern={query} /> : null }
       </div>
     );
   }
 }
 
-const Search = ({ value, onChange, children }) =>
-  <form>
-    {children}
+const Search = ({ value, onChange, onSubmit, children }) =>
+  <form onSubmit={onSubmit}>
     <input type="text" placeholder="search" className="searchInput"
       value={value}
       onChange={onChange} />
+    <button type="submit">{children}</button>
   </form>;
+
+const Loading = ({ children }) =>
+  <div>{children}</div>;
 
 class Table extends Component {
   render() {
