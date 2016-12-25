@@ -1,0 +1,26 @@
+exports[`App snapshots 1`] = `
+<div
+  className="App">
+  <form
+    onSubmit={[Function]}>
+    <input
+      className="searchInput"
+      onChange={[Function]}
+      placeholder="search"
+      type="text"
+      value={undefined} />
+    <button
+      type="submit">
+      Search
+    </button>
+  </form>
+  <div>
+    Loading
+  </div>
+  <button
+    onClick={[Function]}
+    type="button">
+    More
+  </button>
+</div>
+`;

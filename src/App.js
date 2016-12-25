@@ -2,9 +2,11 @@ import React, { Component } from 'react';
 import './App.css';
 
 const DEFAULT_QUERY = 'redux';
+const DEFAULT_PAGE = 0;
 const PATH_BASE = 'https://hn.algolia.com/api/v1';
 const PATH_SEARCH = '/search';
 const PARAM_SEARCH = '?query=';
+const PARAM_PAGE = '&page=';
 const SEARCH = `${PATH_BASE}${PATH_SEARCH}${PARAM_SEARCH}`;
 
 const isSearched = (query) => (item) =>
@@ -28,25 +30,31 @@ class App extends Component {
   }
 
   setSearchTopStories(result) {
+    const { hits, page } = result;
+    const oldHits = page === 0 ? [] : this.state.result.hits;
+    const updatedHits = [...oldHits, ...hits];
     this.setState({
-      result,
+      result: {
+        hits: updatedHits,
+        page,
+      },
       isLoading: false,
     });
   }
 
-  fetchSearchTopStories(query) {
+  fetchSearchTopStories(query, page) {
     this.setState({
       isLoading: true,
     });
 
-    fetch(`${SEARCH}${query}`)
+    fetch(`${SEARCH}${query}${PARAM_PAGE}${page}`)
       .then(response => response.json())
       .then(result => this.setSearchTopStories(result));
   }
 
   componentDidMount() {
     const { query } = this.state;
-    this.fetchSearchTopStories(query);
+    this.fetchSearchTopStories(query, DEFAULT_PAGE);
   }
 
   onSearchChange(event) {
@@ -57,12 +65,13 @@ class App extends Component {
 
   onSearchSubmit(event) {
     const { query } = this.state;
-    this.fetchSearchTopStories(query);
+    this.fetchSearchTopStories(query, DEFAULT_PAGE);
     event.preventDefault();
   }
 
   render() {
     const { query, result, isLoading } = this.state;
+    const page = (result && result.page) || 0;
     return (
       <div className="App">
         <Search
@@ -71,6 +80,7 @@ class App extends Component {
           onSubmit={this.onSearchSubmit}>Search</Search>
         { isLoading && <Loading>Loading</Loading> }
         { result ? <Table list={result.hits} pattern={query} /> : null }
+        <Button onClick={() => this.fetchSearchTopStories(query, page + 1)}>More</Button>
       </div>
     );
   }
@@ -86,6 +96,9 @@ const Search = ({ value, onChange, onSubmit, children }) =>
 
 const Loading = ({ children }) =>
   <div>{children}</div>;
+
+const Button = ({ onClick, children }) =>
+  <button onClick={onClick} type="button">{children}</button>;
 
 class Table extends Component {
   render() {
