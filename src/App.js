@@ -46,20 +46,35 @@ class App extends Component {
     const { query, list } = this.state;
     return (
       <div className="App">
-        <form>
-          <input type="text" placeholder="search" className="searchInput"
-            value={query}
-            onChange={this.onSearchChange} />
-        </form>
-        {
-          list.filter(isSearched(query)).map((item) =>
-            <div key={item.objectID} className="list">
-              <span><a href={item.url}>{item.title}</a></span>
-              <span>{item.author}</span>
-              <span>{item.points}</span>
-            </div>
-          )
-        }
+        <Search query={query} onChange={this.onSearchChange}>Search: </Search>
+        <Table list={list} pattern={query} />
+      </div>
+    );
+  }
+}
+
+const Search = ({ value, onChange, children }) =>
+  <form>
+    {children}
+    <input type="text" placeholder="search" className="searchInput"
+      value={value}
+      onChange={onChange} />
+  </form>;
+
+class Table extends Component {
+  render() {
+    const { list, pattern } = this.props;
+    return (
+      <div>
+      {
+        list.filter(isSearched(pattern)).map((item) =>
+          <div key={item.objectID} className="list">
+            <span><a href={item.url}>{item.title}</a></span>
+            <span>{item.author}</span>
+            <span>{item.points}</span>
+          </div>
+        )
+      }
       </div>
     );
   }
